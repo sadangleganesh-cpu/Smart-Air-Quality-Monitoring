@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)http://127.0.0.1:5500/senser.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Air Quality IoT System - 1-Acre Zone Monitor</title>
+    <style>
+        :root {
+            --bg-color: #070a13;
+            --card-bg: #111827;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --good: #22c55e;
+            --moderate: #eab308;
+            --danger: #ef4444;
+            --hazardous: #a855f7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 1050px; }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { margin: 0; font-size: 1.5rem; color: var(--accent); }
+        header p { color: var(--text-sub); font-size: 0.85rem; }
+
+        .control-panel {
+            background-color: var(--card-bg);
+            padding: 15px 20px; border-radius: 12px;
+            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+            margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            border: 1px solid #1f2937;
+        }
+        .control-panel input {
+            flex: 1; min-width: 200px; padding: 10px 14px; border-radius: 8px;
+            border: 1px solid #374151; background-color: #030712; color: white; font-size: 0.95rem;
+        }
+        .control-panel button {
+            padding: 10px 16px; background-color: #0284c7; color: white;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;
+        }
+        .control-panel button:hover { background-color: #0ea5e9; }
+        .control-panel button.gps-btn { background-color: #059669; }
+        .control-panel button.gps-btn:hover { background-color: #10b981; }
+
+        .presentation-mode {
+            background: #1e1b4b; border: 1px dashed #6366f1; padding: 12px 15px; border-radius: 12px; margin-bottom: 20px;
+        }
+        .presentation-mode h4 { margin: 0 0 8px 0; color: #818cf8; font-size: 0.9rem; }
+        .slider-group { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; }
+        .slider-group input { flex: 1; }
+
+        .section-title {
+            font-size: 0.95rem; color: var(--accent); margin: 20px 0 10px 0;
+            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1f2937; padding-bottom: 5px;
+        }
+
+        /* Sensor Grid */
+        .sensor-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;
+        }
+        .sensor-card {
+            background-color: var(--card-bg); border-radius: 12px; padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); border-left: 4px solid #38bdf8; position: relative;
+        }
+        .sensor-card .chip-tag {
+            font-size: 0.65rem; background: #1f2937; color: var(--accent);
+            padding: 2px 6px; border-radius: 4px; position: absolute; top: 12px; right: 12px;
+        }
+        .sensor-card h3 { margin: 0 0 8px 0; font-size: 0.75rem; color: var(--text-sub); text-transform: uppercase; }
+        .sensor-card .value { font-size: 1.4rem; font-weight: bold; margin-bottom: 4px; }
+        .sensor-card .unit { font-size: 0.7rem; color: var(--text-sub); }
+
+        /* 1-Acre Zone Breakdown Grid */
+        .zone-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;
+        }
+        .zone-card {
+            background-color: #0f172a; border-radius: 10px; padding: 12px; border: 1px solid #1e293b;
+        }
+        .zone-card h4 { margin: 0 0 5px 0; color: #38bdf8; font-size: 0.85rem; }
+        .zone-card p { margin: 3px 0; font-size: 0.75rem; color: var(--text-sub); }
+
+        .status-banner {
+            background-color: var(--card-bg); border-radius: 12px; padding: 15px 20px;
+            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 6px solid var(--good);
+        }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
+
+        /* Actuators Grid */
+        .iot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 10px; }
+        .iot-device {
+            background-color: var(--card-bg); border-radius: 10px; padding: 14px; border-left: 4px solid #64748b;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .iot-device.active-danger { border-left-color: var(--danger); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .logs-container { background-color: var(--card-bg); border-radius: 12px; padding: 15px; margin-top: 20px; }
+        #log-list { list-style: none; padding: 0; margin: 0; max-height: 110px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; }
+        #log-list li { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Smart Air Quality IoT System — 1-Acre Perimeter Monitor</h1>
+        <p>Surrounding Area Telemetry, Micro-Zone Grid &amp; Automated Actuator Response</p>
+    </header>
+
+    <!-- Search & GPS Controls -->
+    <div class="control-panel">
+        <input type="text" id="locationInput" placeholder="Enter a city or town name (e.g., Bengaluru, Mysuru, Chennai)..." value="Bengaluru">
+        <button onclick="fetchAreaTelemetry()">Search Site</button>
+        <button class="gps-btn" onclick="fetchGPSLocation()">📍 Use Present GPS Location</button>
+    </div>
+
+    <!-- Presentation Test Rig Controls -->
+    <div class="presentation-mode">
+        <h4>🎓 Presentation Test Rig: Override 1-Acre PM2.5 Sensor Level</h4>
+        <div class="slider-group">
+            <span>Safe (10)</span>
+            <input type="range" id="testSlider" min="5" max="200" value="18" oninput="overrideWithSlider(this.value)">
+            <span>Danger (200 µg/m³)</span>
+            <span id="sliderVal" style="font-weight:bold; width:55px;">31.7 µg/m³</span>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div class="status-banner" id="statusBanner" style="border-left-color: var(--good);">
+        <div>
+            <h3 style="margin:0 0 4px 0;" id="statusTitle">1-Acre Zone Status: Safe (Normal Air Quality)</h3>
+            <p style="margin:0; color: var(--text-sub); font-size: 0.85rem;" id="statusDesc">Perimeter secure around Bengaluru. Natural ventilation active.</p>
+        </div>
+        <div class="status-badge" id="statusBadge" style="background:rgba(34,197,94,0.2); color:var(--good);">SAFE (🟢)</div>
+    </div>
+
+    <!-- Main Central Node Sensor Grid -->
+    <div class="section-title">📡 Central Node Sensors (Primary Telemetry)</div>
+    <div class="sensor-grid">
+        <div class="sensor-card">
+            <span class="chip-tag">PMS5003</span>
+            <h3>PM2.5 Dust Density</h3>
+            <div class="value" id="val-pm25">31.7</div>
+            <div class="unit">µg/m³ (Particulate Matter)</div>
+        </div>
+        <div class="sensor-card">
+            <span class="chip-tag">DHT22</span>
+            <h3>Ambient Temperature</h3>
+            <div class="value" id="val-temp">26.5</div>
+            <div class="unit">°C</div>
+        </div>
+        <div class="sensor-card">
+            <span class="chip-tag">DHT22</span>
+            <h3>Relative Humidity</h3>
+            <div class="value" id="val-humidity">56.0</div>
+            <div class="unit">% RH</div>
+        </div>
+        <div class="sensor-card">
+            <span class="chip-tag">MQ-135</span>
+            <h3>Pollution / Gas Index</h3>
+            <div class="value" id="val-aqi">40</div>
+            <div class="unit">AQI Score</div>
+        </div>
+        <div class="sensor-card">
+            <span class="chip-tag">O2 Sensor</span>
+            <h3>Oxygen Concentration</h3>
+            <div class="value" id="val-oxygen">20.97%</div>
+            <div class="unit">% ($O_2$)</div>
+        </div>
+    </div>
+
+    <!-- 1-Acre Surrounding Perimeter Zone Breakdown -->
+    <div class="section-title">🗺️ 1-Acre Perimeter Surrounding Zone Breakdown</div>
+    <div class="zone-grid">
+        <div class="zone-card">
+            <h4>Zone A: North Perimeter</h4>
+            <p>PM2.5: <span id="zoneA-pm">28.5</span> µg/m³</p>
+            <p>Status: <span id="zoneA-status" style="color:var(--good);">Normal 🟢</span></p>
+        </div>
+        <div class="zone-card">
+            <h4>Zone B: Center Facility Hub</h4>
+            <p>PM2.5: <span id="zoneB-pm">31.7</span> µg/m³</p>
+            <p>Status: <span id="zoneB-status" style="color:var(--good);">Normal 🟢</span></p>
+        </div>
+        <div class="zone-card">
+            <h4>Zone C: South Boundary</h4>
+            <p>PM2.5: <span id="zoneC-pm">36.5</span> µg/m³</p>
+            <p>Status: <span id="zoneC-status" style="color: var(--moderate);">Moderate 🟡</span></p>
+        </div>
+    </div>
+
+    <!-- IoT Hardware Actuators Panel -->
+    <div class="section-title">🔌 Automated IoT Hardware Actuators (Site Response)</div>
+    <div class="iot-grid">
+        <div class="iot-device" id="iotBuzzer">
+            <div style="font-size:0.75rem; color:var(--text-sub);">Piezo Buzzer Siren</div>
+            <div id="stateBuzzer" style="font-weight:bold; color:var(--good); font-size:0.9rem;">OFF (Standby)</div>
+        </div>
+        <div class="iot-device" id="iotFan">
+            <div style="font-size:0.75rem; color:var(--text-sub);">Exhaust Fan / Air Purifier</div>
+            <div id="stateFan" style="font-weight:bold; color:var(--good); font-size:0.9rem;">OFF</div>
+        </div>
+        <div class="iot-device" id="iotWindow">
+            <div style="font-size:0.75rem; color:var(--text-sub);">Smart Shutter Servo Motor</div>
+            <div id="stateWindow" style="font-weight:bold; color:var(--good); font-size:0.9rem;">OPEN (Ventilating)</div>
+        </div>
+        <div class="iot-device" id="iotCloud">
+            <div style="font-size:0.75rem; color:var(--text-sub);">ESP32 Wi-Fi / MQTT Cloud Gateway</div>
+            <div id="stateCloud" style="font-weight:bold; color:var(--good); font-size:0.9rem;">Normal Telemetry Stream</div>
+        </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="logs-container">
+        <h3 style="margin:0 0 8px 0; color:var(--accent); font-size:0.85rem;">Live 1-Acre Micro-Grid Event Log</h3>
+        <ul id="log-list"><li>[12:06:52 pm] 1-Acre perimeter check at Bengaluru -&gt; PM2.5: 31.7 µg/m³ (Safe).</li><li>[12:06:50 pm] Searching area coordinates for: Bengaluru...</li>
+            <li>[System] 1-acre zone monitor initialized. Ready to check site telemetry.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Fetch via GPS browser location
+    function fetchGPSLocation() {
+        if (!navigator.geolocation) {
+            addLog("Geolocation not supported by this browser. Using typed site name instead.");
+            fetchAreaTelemetry();
+            return;
+        }
+        addLog("Detecting present GPS coordinates...");
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            let lat = position.coords.latitude;
+            let lon = position.coords.longitude;
+            addLog(`GPS fix: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+            fetchCoordinatesData(lat, lon, `GPS Area (${lat.toFixed(2)}, ${lon.toFixed(2)})`);
+        }, (err) => {
+            addLog(`GPS unavailable (${err.message}). Open this page via http://localhost and allow location access. Falling back to typed site name.`);
+            fetchAreaTelemetry();
+        }, { timeout: 10000 });
+    }
+
+    async function fetchAreaTelemetry() {
+        const place = document.getElementById('locationInput').value.trim();
+        addLog(`Searching area coordinates for: ${place}...`);
+        
+        try {
+            let geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1`);
+            let geoData = await geoRes.json();
+            
+            if (!geoData.results || geoData.results.length === 0) {
+                addLog(`"${place}" not found. Use a city or town name, e.g. Bengaluru.`);
+                return;
+            }
+            let loc = geoData.results[0];
+            fetchCoordinatesData(loc.latitude, loc.longitude, loc.name);
+        } catch (err) {
+            addLog("Network error while searching. Showing offline demo values.");
+            processSensorData(22.5, 26.0, 58.0, place);
+        }
+    }
+
+    async function fetchCoordinatesData(lat, lon, label) {
+        try {
+            let weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`);
+            let airRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5`);
+            
+            let weatherData = await weatherRes.json();
+            let airData = await airRes.json();
+            
+            let temp = weatherData.current.temperature_2m;
+            let humidity = weatherData.current.relative_humidity_2m;
+            let pm25 = airData.current.pm2_5;
+            
+            document.getElementById('testSlider').value = Math.min(pm25, 200);
+            document.getElementById('sliderVal').innerText = pm25.toFixed(1) + ' µg/m³';
+            
+            processSensorData(pm25, temp, humidity, label);
+        } catch (err) {
+            addLog("Could not reach air-quality API. Showing offline demo values.");
+            processSensorData(24.0, 27.0, 60.0, label);
+        }
+    }
+
+    function overrideWithSlider(val) {
+        document.getElementById('sliderVal').innerText = val + ' µg/m³';
+        processSensorData(parseFloat(val), 27.5, 62.0, "Manual Test Override");
+    }
+
+    function processSensorData(pm25, temp, humidity, locationName) {
+        let oxygen = parseFloat((21.0 - (pm25 * 0.0008)).toFixed(2));
+        let aqi = Math.round(pm25 * 1.25);
+
+        // Update Central Sensors
+        document.getElementById('val-pm25').innerText = pm25.toFixed(1);
+        document.getElementById('val-temp').innerText = temp.toFixed(1);
+        document.getElementById('val-humidity').innerText = humidity.toFixed(1);
+        document.getElementById('val-aqi').innerText = aqi;
+        document.getElementById('val-oxygen').innerText = oxygen + '%';
+
+        // Simulate 1-acre micro-zone variations (North, Center, South of the 1-acre plot)
+        let pmZoneA = Math.max(5, pm25 * 0.9);
+        let pmZoneB = pm25;
+        let pmZoneC = Math.min(200, pm25 * 1.15);
+
+        document.getElementById('zoneA-pm').innerText = pmZoneA.toFixed(1);
+        document.getElementById('zoneB-pm').innerText = pmZoneB.toFixed(1);
+        document.getElementById('zoneC-pm').innerText = pmZoneC.toFixed(1);
+
+        const updateZoneStatus = (elementId, value) => {
+            let el = document.getElementById(elementId);
+            if (value > 75) { el.innerText = "DANGER 🔴"; el.style.color = "var(--danger)"; }
+            else if (value > 35) { el.innerText = "Moderate 🟡"; el.style.color = "var(--moderate)"; }
+            else { el.innerText = "Normal 🟢"; el.style.color = "var(--good)"; }
+        };
+
+        updateZoneStatus('zoneA-status', pmZoneA);
+        updateZoneStatus('zoneB-status', pmZoneB);
+        updateZoneStatus('zoneC-status', pmZoneC);
+
+        let statusTitle = "1-Acre Zone Status: Safe (Normal Air Quality)";
+        let statusDesc = `Perimeter secure around ${locationName}. Natural ventilation active.`;
+        let badgeText = "SAFE (🟢)";
+        let badgeBg = "rgba(34,197,94,0.2)";
+        let badgeColor = "var(--good)";
+        let bannerBorder = "var(--good)";
+
+        let buzzerText = "OFF (Standby)", buzzerColor = "var(--good)", buzzerDanger = false;
+        let fanText = "OFF", fanColor = "var(--good)", fanDanger = false;
+        let windowText = "OPEN (Ventilating)", windowColor = "var(--good)", windowDanger = false;
+        let cloudText = "Normal Telemetry Stream", cloudColor = "var(--good)", cloudDanger = false;
+
+        // Danger Threshold Check
+        if (pm25 > 35 && pm25 <= 75) {
+            statusTitle = "1-Acre Zone Status: Moderate Warning";
+            statusDesc = "⚠️ Sensors across the 1-acre perimeter detect rising particulate density.";
+            badgeText = "MODERATE (🟡)";
+            badgeBg = "rgba(234,179,8,0.2)";
+            badgeColor = "var(--moderate)";
+            bannerBorder = "var(--moderate)";
+            fanText = "ON (Low Speed Air Purifier)"; fanColor = "var(--moderate)";
+        } else if (pm25 > 75) {
+            statusTitle = "🚨 DANGER! HIGH POLLUTION ACROSS 1-ACRE SITE!";
+            statusDesc = "Critical threshold crossed! IoT actuators engaged automatically.";
+            badgeText = "DANGER (🔴)";
+            badgeBg = "rgba(239,68,68,0.2)";
+            badgeColor = "var(--danger)";
+            bannerBorder = "var(--danger)";
+
+            buzzerText = "🚨 ACTIVE (Pulsing 85dB Siren)"; buzzerColor = "var(--danger)"; buzzerDanger = true;
+            fanText = "💨 ON (High Speed Turbo Purifier)"; fanColor = "var(--danger)"; fanDanger = true;
+            windowText = "🚪 CLOSED & LOCKED (Sealed)"; windowColor = "var(--danger)"; windowDanger = true;
+            cloudText = "📡 MQTT EMERGENCY PACKET DISPATCHED!"; cloudColor = "var(--danger)"; cloudDanger = true;
+            
+            addLog(`🚨 DANGER ALERT across 1-acre site (${locationName}) | PM2.5: ${pm25.toFixed(1)} µg/m³ -> IoT Actuators Activated!`);
+        } else {
+            addLog(`1-Acre perimeter check at ${locationName} -> PM2.5: ${pm25.toFixed(1)} µg/m³ (Safe).`);
+        }
+
+        document.getElementById('statusBanner').style.borderLeftColor = bannerBorder;
+        document.getElementById('statusTitle').innerText = statusTitle;
+        document.getElementById('statusDesc').innerText = statusDesc;
+        let badge = document.getElementById('statusBadge');
+        badge.innerText = badgeText;
+        badge.style.backgroundColor = badgeBg;
+        badge.style.color = badgeColor;
+
+        setActuatorState('iotBuzzer', 'stateBuzzer', buzzerText, buzzerColor, buzzerDanger);
+        setActuatorState('iotFan', 'stateFan', fanText, fanColor, fanDanger);
+        setActuatorState('iotWindow', 'stateWindow', windowText, windowColor, windowDanger);
+        setActuatorState('iotCloud', 'stateCloud', cloudText, cloudColor, cloudDanger);
+    }
+
+    function setActuatorState(cardId, stateId, text, color, isDanger) {
+        document.getElementById(stateId).innerText = text;
+        document.getElementById(stateId).style.color = color;
+        let card = document.getElementById(cardId);
+        if (isDanger) card.classList.add('active-danger');
+        else card.classList.remove('active-danger');
+    }
+
+    function addLog(msg) {
+        let list = document.getElementById('log-list');
+        let li = document.createElement('li');
+        li.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        list.prepend(li);
+        if (list.children.length > 10) list.removeChild(list.lastChild);
+    }
+
+    // Initial load
+    fetchAreaTelemetry();
+</script>
+
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+</body></html>
